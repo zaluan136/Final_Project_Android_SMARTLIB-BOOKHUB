@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function verified() { return request.auth != null && request.auth.token.email_verified == true; }
+    function staff() { return verified() && request.auth.token.role in ['librarian', 'admin']; }
+    match /books/{id} { allow read: if verified(); }
+    match /settings/{id} { allow read: if verified(); }
+    match /loans/{id} { allow read: if verified() && (resource.data.readerId == request.auth.uid || staff()); }
+    match /readers/{id} { allow read: if verified() && (request.auth.uid == id || staff()); }
+    // All writes go through callable functions using trusted claims and transactions.
+    // No user can assign their own role or alter counts, due dates or fine amounts.
+    match /{document=**} { allow read, write: if false; }
+  }
+}

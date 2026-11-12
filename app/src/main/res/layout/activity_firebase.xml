@@ -1,0 +1,4 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/firebase_root" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/paper">
+ <com.google.android.material.button.MaterialButton android:id="@+id/firebase_back" style="@style/Widget.Material3.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Trở về bản demo" />
+ <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"><LinearLayout android:id="@+id/firebase_content" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp" /></ScrollView>
+</LinearLayout>

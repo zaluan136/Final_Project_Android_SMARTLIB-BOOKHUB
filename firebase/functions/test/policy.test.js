@@ -1,0 +1,15 @@
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const P = require('../policy');
+const rules={maxLoans:3,loanDays:14,renewalDays:7,maxRenewals:1,dailyFine:3000};
+const reader={uid:'alice',role:'reader'},staff={uid:'staff',role:'librarian'};
+const loan={readerId:'alice',status:'RESERVED',pickupDay:20000,dueDay:0,renewals:0};
+test('auth requires verified email and defaults to reader',()=>{assert.throws(()=>P.actor(null));assert.throws(()=>P.actor({uid:'a',token:{email_verified:false}}));assert.equal(P.actor({uid:'a',token:{email_verified:true}}).role,'reader');});
+test('server uses Vietnam date boundary',()=>{assert.equal(P.day(Date.parse('2026-11-12T16:59:59Z'))+1,P.day(Date.parse('2026-11-12T17:00:00Z')));});
+test('stock limit, overdue, role and invalid dates are rejected',()=>{const b={available:1};P.reserve(reader,b,2,false,20000,20000,rules);for(const args of [[staff,b,0,false,20000],[reader,{available:0},0,false,20000],[reader,b,3,false,20000],[reader,b,0,true,20000],[reader,b,0,false,20008]])assert.throws(()=>P.reserve(...args,20000,rules));});
+test('checkout requires staff and exact pickup day',()=>{assert.throws(()=>P.transition('checkout',reader,loan,20000,rules));assert.throws(()=>P.transition('checkout',staff,loan,20001,rules));assert.equal(P.transition('checkout',staff,loan,20000,rules).dueDay,20014);});
+test('full lifecycle uses snapshotted fine and preserves input',()=>{const borrowed=P.transition('checkout',staff,loan,20000,rules);const returned=P.transition('return',staff,borrowed,20016,{...rules,dailyFine:9000});assert.equal(returned.fine,6000);assert.equal(loan.status,'RESERVED');assert.throws(()=>P.transition('return',staff,returned,20016,rules));});
+test('renewal requires owner, not overdue and remaining allowance',()=>{const b=P.transition('checkout',staff,loan,20000,rules);assert.throws(()=>P.transition('renew',{uid:'bob',role:'reader'},b,20000,rules));assert.throws(()=>P.transition('renew',reader,b,20015,rules));const next=P.transition('renew',reader,b,20014,rules);assert.equal(next.dueDay,20021);assert.throws(()=>P.transition('renew',reader,next,20014,rules));});
+test('cancel cannot affect borrowed loans or another reader',()=>{assert.throws(()=>P.transition('cancel',{uid:'bob',role:'reader'},loan,20000,rules));assert.throws(()=>P.transition('cancel',reader,{...loan,status:'BORROWED'},20000,rules));assert.equal(P.transition('cancel',reader,loan,20000,rules).status,'CANCELLED');});
+test('expiry is server only and strictly after pickup day',()=>{assert.throws(()=>P.transition('expire',staff,loan,20001,rules));assert.throws(()=>P.transition('expire',{role:'system'},loan,20000,rules));assert.equal(P.transition('expire',{role:'system'},loan,20001,rules).status,'EXPIRED');});
+test('configuration rejects unsafe ranges and noninteger values',()=>{assert.deepEqual(P.rules(rules),rules);for(const patch of [{maxLoans:0},{loanDays:91},{dailyFine:-1},{maxRenewals:0.5}])assert.throws(()=>P.rules({...rules,...patch}));});

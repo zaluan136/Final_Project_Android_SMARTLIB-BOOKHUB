@@ -1,3 +1,1 @@
-<resources>
-    <string name="app_name">Ứng dụng Đặt lịch Mượn và Quản lý Trả Sách</string>
-</resources>
+<resources><string name="app_name">BookHub</string><string name="brand">bookhub.</string><string name="brand_subtitle">Mỗi trang sách, một chân trời</string><string name="demo">DEMO NGOẠI TUYẾN · Dữ liệu trên thiết bị</string><string name="search_hint">Tìm tên sách, tác giả hoặc ISBN…</string><string name="explore">Khám phá</string><string name="loans">Phiếu mượn</string><string name="manage">Quản lý</string><string name="profile">Thư viện</string><string name="role">Đổi vai trò demo</string><string name="cover">Bìa minh họa</string></resources>

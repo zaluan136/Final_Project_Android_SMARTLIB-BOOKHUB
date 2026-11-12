@@ -1,0 +1,1 @@
+{"indexes":[{"collectionGroup":"loans","queryScope":"COLLECTION","fields":[{"fieldPath":"readerId","order":"ASCENDING"},{"fieldPath":"status","order":"ASCENDING"}]},{"collectionGroup":"loans","queryScope":"COLLECTION","fields":[{"fieldPath":"status","order":"ASCENDING"},{"fieldPath":"pickupDay","order":"ASCENDING"}]}],"fieldOverrides":[]}

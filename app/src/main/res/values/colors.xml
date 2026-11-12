@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+<color name="forest">#155D50</color><color name="ink">#183C35</color><color name="muted">#5C706A</color>
+<color name="paper">#F6F8F4</color><color name="surface">#FFFFFF</color><color name="mint">#E7F2EB</color>
+<color name="outline">#D8E4DD</color><color name="amber">#875216</color>
 </resources>
