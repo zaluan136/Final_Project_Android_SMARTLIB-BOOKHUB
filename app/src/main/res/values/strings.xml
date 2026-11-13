@@ -1,1 +1,18 @@
-<resources><string name="app_name">BookHub</string><string name="brand">BookHub</string><string name="brand_subtitle">Thư viện sách</string><string name="demo">DEMO NGOẠI TUYẾN · Dữ liệu trên thiết bị</string><string name="search_hint">Tìm tên sách, tác giả hoặc ISBN…</string><string name="explore">Khám phá</string><string name="loans">Phiếu mượn</string><string name="manage">Quản lý</string><string name="profile">Thư viện</string><string name="role">Đổi vai trò demo</string><string name="cover">Bìa minh họa</string><string name="team_credit">524H0098 - Nguyễn Hòa Khang\n524H0109 - Lý Gia Luân</string></resources>
+<resources>
+    <string name="app_name">BookHub</string>
+    <string name="brand">BookHub</string>
+    <string name="brand_subtitle">Thư viện sách</string>
+    <string name="demo">DEMO NGOẠI TUYẾN · Dữ liệu trên thiết bị</string>
+    <string name="search_hint">Tìm tên sách, tác giả hoặc ISBN…</string>
+    <string name="clear_search">Xóa tìm kiếm</string>
+    <string name="explore">Khám phá</string>
+    <string name="loans">Phiếu mượn</string>
+    <string name="manage">Quản lý</string>
+    <string name="profile">Thư viện</string>
+    <string name="role">Đổi vai trò demo</string>
+    <string name="reader_role">Độc giả</string>
+    <string name="cover">Bìa minh họa</string>
+    <string name="sort">Sắp xếp</string>
+    <string name="only_available">Có sẵn</string>
+    <string name="team_credit">524H0098 - Nguyễn Hòa Khang\n524H0109 - Lý Gia Luân</string>
+</resources>

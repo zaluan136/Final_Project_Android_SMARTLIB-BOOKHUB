@@ -9,6 +9,7 @@ import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import androidx.activity.EdgeToEdge;
@@ -16,10 +17,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-import com.example.smartlibandbookhub.data.LibraryStore;
+import androidx.lifecycle.ViewModelProvider;
 import com.example.smartlibandbookhub.domain.Library;
+import com.example.smartlibandbookhub.data.LibraryRepository;
 import com.example.smartlibandbookhub.domain.Library.*;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationBarView;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -37,19 +39,48 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public final class MainActivity extends AppCompatActivity {
-  private LibraryStore store;
+  private enum SortBy {
+    DEFAULT("Mặc định"),
+    TITLE_AZ("Tên (A → Z)"),
+    TITLE_ZA("Tên (Z → A)"),
+    AVAILABLE_FIRST("Còn sẵn trước"),
+    COPIES_DESC("Nhiều bản nhất");
+
+    final String label;
+    SortBy(String label) { this.label = label; }
+  }
+
+  private LibraryViewModel viewModel;
+  private androidx.appcompat.app.AlertDialog activeForm;
+  private EditText[] formFields;
+  private String formType;
+  private String formBookId;
+  private Bundle pendingForm;
   private Library library;
   private Role role = Role.READER;
   private LinearLayout content;
+  private LinearLayout bookResultsContainer;
+  private androidx.recyclerview.widget.RecyclerView recycler;
+  private LibraryListAdapter listAdapter;
+  private android.os.Parcelable pendingScroll;
+  private int displayedTab = -1;
   private MaterialButton roleButton;
-  private BottomNavigationView navigation;
+  private NavigationBarView navigation;
+  private View searchBarContainer;
+  private EditText searchInput;
+  private ImageView searchClear;
+  private TextView topTitle;
+  private View filterScroll;
+  private ChipGroup filterChips;
+  private final List<Chip> categoryChipViews = new java.util.ArrayList<>();
+  private Chip sortChip;
+  private Chip availChip;
   private int tab = R.id.nav_explore;
   private String query = "", category = "Tất cả";
-  private final ExecutorService io = Executors.newSingleThreadExecutor();
+  private SortBy sortBy = SortBy.DEFAULT;
+  private boolean onlyAvailable = false;
   private boolean busy;
   private static final String[] ROLES = {"Độc giả", "Thủ thư", "Quản trị"};
 
@@ -58,6 +89,10 @@ public final class MainActivity extends AppCompatActivity {
     super.onCreate(saved);
     EdgeToEdge.enable(this);
     setContentView(R.layout.activity_main);
+    viewModel = new ViewModelProvider(this,
+        new LibraryViewModelFactory(this, getIntent().getExtras(), getApplication(),
+            new LibraryRepository(getApplicationContext()))).get(LibraryViewModel.class);
+    pendingForm = saved == null ? null : saved.getBundle("active_form");
     ViewCompat.setOnApplyWindowInsetsListener(
         findViewById(R.id.main),
         (v, insets) -> {
@@ -67,15 +102,57 @@ public final class MainActivity extends AppCompatActivity {
           v.setPadding(b.left, b.top, b.right, b.bottom);
           return WindowInsetsCompat.CONSUMED;
         });
+    role = Role.valueOf(viewModel.getSaved("role", Role.READER.name()));
+    tab = viewModel.getSaved("tab", R.id.nav_explore);
+    query = viewModel.getSaved("query", "");
+    category = viewModel.getSaved("category", "Tất cả");
     if (saved != null) {
-      role = Role.valueOf(saved.getString("role", Role.READER.name()));
-      tab = saved.getInt("tab", R.id.nav_explore);
-      query = saved.getString("query", "");
-      category = saved.getString("category", "Tất cả");
+      try {
+        sortBy = SortBy.valueOf(saved.getString("sort_by", SortBy.DEFAULT.name()));
+      } catch (Exception ignored) {
+        sortBy = SortBy.DEFAULT;
+      }
+      onlyAvailable = saved.getBoolean("only_available", false);
     }
-    content = findViewById(R.id.content);
+    recycler = findViewById(R.id.scroll);
+    recycler.setLayoutManager(new androidx.recyclerview.widget.LinearLayoutManager(this));
+    int padding = getResources().getDimensionPixelSize(R.dimen.screen_padding);
+    recycler.setPadding(padding, 0, padding, 0);
+    pendingScroll = saved == null ? null : saved.getParcelable("scroll_position");
     roleButton = findViewById(R.id.role_button);
     navigation = findViewById(R.id.navigation);
+    searchBarContainer = findViewById(R.id.search_bar_container);
+    searchInput = findViewById(R.id.search_input);
+    searchClear = findViewById(R.id.search_clear);
+    topTitle = findViewById(R.id.top_title);
+    filterScroll = findViewById(R.id.filter_scroll);
+    filterChips = findViewById(R.id.filter_chips);
+    if (searchInput != null) {
+      if (!query.isEmpty()) searchInput.setText(query);
+      if (searchClear != null) searchClear.setVisibility(query.isEmpty() ? View.GONE : View.VISIBLE);
+      searchInput.addTextChangedListener(
+          new TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+              query = s.toString();
+              viewModel.setQuery(query);
+              if (searchClear != null) {
+                searchClear.setVisibility(query.isEmpty() ? View.GONE : View.VISIBLE);
+              }
+              if (tab == R.id.nav_explore && bookResultsContainer != null) {
+                bookResults(bookResultsContainer);
+              }
+            }
+
+            public void afterTextChanged(Editable s) {}
+          });
+    }
+    if (searchClear != null) {
+      searchClear.setOnClickListener(v -> {
+        if (searchInput != null) searchInput.setText("");
+      });
+    }
     roleButton.setText(ROLES[role.ordinal()]);
     roleButton.setOnClickListener(
         v ->
@@ -86,6 +163,7 @@ public final class MainActivity extends AppCompatActivity {
                     role.ordinal(),
                     (d, which) -> {
                       role = Role.values()[which];
+                      viewModel.setRole(role);
                       roleButton.setText(ROLES[which]);
                       d.dismiss();
                       render();
@@ -97,181 +175,246 @@ public final class MainActivity extends AppCompatActivity {
         item -> {
           if (busy) return false;
           tab = item.getItemId();
+          viewModel.setTab(tab);
           render();
-          findViewById(R.id.scroll).scrollTo(0, 0);
+          recycler.scrollToPosition(0);
           return true;
         });
-    store = new LibraryStore(getApplicationContext());
-    load();
+    viewModel.getState().observe(this, state -> {
+      busy = state.loading;
+      roleButton.setEnabled(!busy);
+      findViewById(R.id.loading).setVisibility(busy ? View.VISIBLE : View.GONE);
+      if (activeForm != null && activeForm.isShowing()) {
+        activeForm.getButton(-1).setEnabled(!busy);
+      }
+      if (library != state.library) {
+        library = state.library;
+        render();
+        restoreForm();
+      }
+    });
+    viewModel.getResult().observe(this, result -> {
+      if (result == null) return;
+      if (result.error == null) {
+        viewModel.consumeResult();
+        if (result.form && activeForm != null) activeForm.dismiss();
+        if (result.message != null) notice(result.message);
+      } else if (!result.form && result.error instanceof IllegalArgumentException) {
+        viewModel.consumeResult();
+        notice(result.error.getMessage());
+      } else {
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this);
+        if (result.form) {
+          builder.setTitle("Chưa thể lưu")
+              .setMessage(result.error instanceof IllegalArgumentException
+                  ? result.error.getMessage()
+                  : "Không thể lưu dữ liệu. Kiểm tra dung lượng thiết bị và thử lại.")
+              .setPositiveButton("Đã hiểu", (d, w) -> viewModel.consumeResult());
+        } else {
+          builder.setTitle("Không thể đọc hoặc lưu dữ liệu")
+              .setMessage("Thao tác chưa được xác nhận. Dữ liệu hiện có được giữ lại; hãy kiểm tra dung lượng thiết bị rồi thử lại. Không xóa dữ liệu ứng dụng nếu cần khôi phục.")
+              .setPositiveButton("Thử lại", (d, w) -> {
+                viewModel.consumeResult();
+                load();
+              })
+              .setNegativeButton("Đóng", (d, w) -> viewModel.consumeResult());
+        }
+        androidx.appcompat.app.AlertDialog dialog = builder.create();
+        dialog.setOnCancelListener(d -> viewModel.consumeResult());
+        dialog.show();
+      }
+    });
+    if (viewModel.getState().getValue().library == null && !busy) load();
   }
 
   @Override
   protected void onSaveInstanceState(Bundle out) {
     super.onSaveInstanceState(out);
+    out.putParcelable("scroll_position", recycler.getLayoutManager().onSaveInstanceState());
     out.putString("role", role.name());
     out.putInt("tab", tab);
     out.putString("query", query);
     out.putString("category", category);
-  }
-
-  @Override
-  protected void onResume() {
-    super.onResume();
-    if (store != null && !busy) load();
-  }
-
-  @Override
-  protected void onDestroy() {
-    io.shutdown();
-    super.onDestroy();
+    out.putString("sort_by", sortBy.name());
+    out.putBoolean("only_available", onlyAvailable);
+    if (activeForm != null && activeForm.isShowing() && formFields != null) {
+      Bundle formState = new Bundle();
+      formState.putString("type", formType);
+      formState.putString("book_id", formBookId);
+      String[] values = new String[formFields.length];
+      for (int i = 0; i < formFields.length; i++) values[i] = formFields[i].getText().toString();
+      formState.putStringArray("values", values);
+      out.putBundle("active_form", formState);
+    }
   }
 
   private void load() {
-    run(null, null);
-  }
-
-  private void run(LibraryStore.Change change, String message) {
-    if (busy) return;
-    busy = true;
-    roleButton.setEnabled(false);
-    findViewById(R.id.loading).setVisibility(View.VISIBLE);
-    io.execute(
-        () -> {
-          try {
-            Library next = change == null ? store.read(today()) : store.change(today(), change);
-            runOnUiThread(
-                () -> {
-                  if (isDestroyed()) return;
-                  library = next;
-                  finishWork();
-                  render();
-                  if (message != null) notice(message);
-                });
-          } catch (Exception e) {
-            runOnUiThread(
-                () -> {
-                  if (isDestroyed()) return;
-                  finishWork();
-                  if (e instanceof IllegalArgumentException) notice(e.getMessage());
-                  else
-                    new MaterialAlertDialogBuilder(this)
-                        .setTitle("Không thể đọc hoặc lưu dữ liệu")
-                        .setMessage(
-                            "Thao tác chưa được xác nhận. Dữ liệu hiện có được giữ lại; hãy kiểm"
-                                + " tra dung lượng thiết bị rồi thử lại. Không xóa dữ liệu ứng dụng"
-                                + " nếu cần khôi phục.")
-                        .setPositiveButton("Thử lại", (d, w) -> load())
-                        .setNegativeButton("Đóng", null)
-                        .show();
-                });
-          }
-        });
-  }
-
-  private void finishWork() {
-    busy = false;
-    roleButton.setEnabled(true);
-    findViewById(R.id.loading).setVisibility(View.GONE);
+    viewModel.load(today());
   }
 
   private void render() {
     if (library == null) return;
-    content.removeAllViews();
+    if (searchBarContainer != null && topTitle != null) {
+      if (tab == R.id.nav_explore) {
+        searchBarContainer.setVisibility(View.VISIBLE);
+        if (filterScroll != null) filterScroll.setVisibility(View.VISIBLE);
+        topTitle.setVisibility(View.GONE);
+      } else {
+        searchBarContainer.setVisibility(View.GONE);
+        if (filterScroll != null) filterScroll.setVisibility(View.GONE);
+        topTitle.setVisibility(View.VISIBLE);
+        if (tab == R.id.nav_loans) topTitle.setText(R.string.loans);
+        else if (tab == R.id.nav_manage) topTitle.setText(R.string.manage);
+        else topTitle.setText(R.string.profile);
+      }
+    }
+    setupFilterChips();
+    android.os.Parcelable position = null;
+    if (displayedTab == tab && recycler.getAdapter() != null) {
+      position = recycler.getLayoutManager().onSaveInstanceState();
+    }
+    recycler.setAdapter(null);
+    content = column();
+    content.setId(R.id.content);
+    listAdapter = new LibraryListAdapter();
     if (tab == R.id.nav_explore) explore();
     else if (tab == R.id.nav_loans) loans(false);
     else if (tab == R.id.nav_manage) manage();
     else profile();
+    recycler.setAdapter(listAdapter);
+    displayedTab = tab;
+    if (pendingScroll != null) {
+      position = pendingScroll;
+      pendingScroll = null;
+    }
+    if (position != null) recycler.getLayoutManager().onRestoreInstanceState(position);
   }
 
-  private void explore() {
-    content.addView(text("Danh mục sách", 24, true));
-    TextView hint = text("Tìm sách và đặt lịch nhận tại thư viện.", 14, false);
-    hint.setPadding(0, 0, 0, dp(16));
-    content.addView(hint);
-    TextInputLayout input = new TextInputLayout(this);
-    input.setHint(getString(R.string.search_hint));
-    input.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
-    input.setBoxCornerRadii(dp(8), dp(8), dp(8), dp(8));
-    TextInputEditText search = new TextInputEditText(this);
-    search.setSingleLine(true);
-    search.setText(query);
-    search.setTextSize(14);
-    input.addView(search);
-    content.addView(input);
-    ChipGroup chips = new ChipGroup(this);
-    chips.setSingleLine(true);
-    chips.setSingleSelection(true);
-    chips.setSelectionRequired(true);
+  private void setupFilterChips() {
+    if (filterChips == null || library == null) return;
+    filterChips.removeAllViews();
+    categoryChipViews.clear();
+
+    // 1. Sort Chip
+    sortChip = new Chip(this, null, com.google.android.material.R.attr.chipStyle);
+    sortChip.setChipIconResource(R.drawable.ic_sort);
+    updateSortChipDisplay();
+    sortChip.setOnClickListener(
+        v -> {
+          String[] labels = new String[SortBy.values().length];
+          for (int i = 0; i < SortBy.values().length; i++) labels[i] = SortBy.values()[i].label;
+          new MaterialAlertDialogBuilder(this)
+              .setTitle("Sắp xếp danh sách")
+              .setSingleChoiceItems(
+                  labels,
+                  sortBy.ordinal(),
+                  (d, which) -> {
+                    sortBy = SortBy.values()[which];
+                    updateSortChipDisplay();
+                    d.dismiss();
+                    if (bookResultsContainer != null) bookResults(bookResultsContainer);
+                  })
+              .setNegativeButton("Đóng", null)
+              .show();
+        });
+    filterChips.addView(sortChip);
+
+    // 2. Only Available Filter Chip
+    availChip = new Chip(this, null, com.google.android.material.R.attr.chipStyle);
+    availChip.setText(R.string.only_available);
+    availChip.setCheckable(true);
+    availChip.setChecked(onlyAvailable);
+    availChip.setOnClickListener(
+        v -> {
+          onlyAvailable = availChip.isChecked();
+          if (bookResultsContainer != null) bookResults(bookResultsContainer);
+        });
+    filterChips.addView(availChip);
+
+    // 3. Category Filter Chips
     Set<String> categories = new LinkedHashSet<>();
     categories.add("Tất cả");
     for (Book b : library.books) if (!b.archived) categories.add(b.category);
     if (!categories.contains(category)) category = "Tất cả";
-    LinearLayout results = column();
     for (String name : categories) {
-      Chip c = new Chip(this);
+      Chip c = new Chip(this, null, com.google.android.material.R.attr.chipStyle);
       c.setText(name);
       c.setCheckable(true);
       c.setChecked(name.equals(category));
       c.setOnClickListener(
           v -> {
             category = name;
-            bookResults(results);
+            viewModel.setCategory(category);
+            for (Chip other : categoryChipViews) {
+              other.setChecked(other.getText().toString().equals(category));
+            }
+            if (bookResultsContainer != null) bookResults(bookResultsContainer);
           });
-      chips.addView(c);
+      categoryChipViews.add(c);
+      filterChips.addView(c);
     }
-    android.widget.HorizontalScrollView chipScroll = new android.widget.HorizontalScrollView(this);
-    chipScroll.setHorizontalScrollBarEnabled(false);
-    chipScroll.addView(chips);
-    content.addView(chipScroll);
-    content.addView(results);
-    bookResults(results);
-    search.addTextChangedListener(
-        new TextWatcher() {
-          public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+  }
 
-          public void onTextChanged(CharSequence s, int st, int before, int count) {
-            query = s.toString();
-            bookResults(results);
-          }
+  private void updateSortChipDisplay() {
+    if (sortChip == null) return;
+    if (sortBy == SortBy.DEFAULT) {
+      sortChip.setText(getString(R.string.sort));
+      sortChip.setCheckable(false);
+      sortChip.setChecked(false);
+    } else {
+      sortChip.setText(sortBy.label);
+      sortChip.setCheckable(true);
+      sortChip.setChecked(true);
+    }
+  }
 
-          public void afterTextChanged(Editable e) {}
-        });
+  private void explore() {
+    bookResultsContainer = column();
+    content.addView(bookResultsContainer);
+    bookResults(bookResultsContainer);
   }
 
   private void bookResults(LinearLayout target) {
     target.removeAllViews();
-    List<Book> books = library.search(query, category);
+    List<Book> books = new java.util.ArrayList<>(library.search(query, category));
+    if (onlyAvailable) {
+      books.removeIf(b -> library.available(b.id) <= 0);
+    }
+    switch (sortBy) {
+      case TITLE_AZ:
+        books.sort((a, b) -> a.title.compareToIgnoreCase(b.title));
+        break;
+      case TITLE_ZA:
+        books.sort((a, b) -> b.title.compareToIgnoreCase(a.title));
+        break;
+      case AVAILABLE_FIRST:
+        books.sort((a, b) -> Integer.compare(library.available(b.id), library.available(a.id)));
+        break;
+      case COPIES_DESC:
+        books.sort((a, b) -> Integer.compare(b.copies, a.copies));
+        break;
+      default:
+        break;
+    }
+
+    if (!books.isEmpty()) {
+      TextView flowRef = new TextView(this);
+      flowRef.setText(books.get(0).title);
+      flowRef.setVisibility(View.GONE);
+      target.addView(flowRef);
+    }
+
     target.addView(
         text(
-            query.isEmpty() ? "Danh sách sách" : "Kết quả tìm kiếm · " + books.size(),
-            20,
+            query.isEmpty() ? "Danh mục sách (" + books.size() + ")" : "Kết quả tìm kiếm · " + books.size(),
+            18,
             true));
+    listAdapter.showBooks(books);
     if (books.isEmpty()) {
       LinearLayout empty = panel();
       empty.addView(text("Không tìm thấy sách", 18, true));
       empty.addView(text("Thử tên tác giả hoặc bỏ bộ lọc thể loại.", 15, false));
       target.addView(empty);
-      return;
-    }
-    for (Book b : books) {
-      View row = getLayoutInflater().inflate(R.layout.item_book, target, false);
-      ((TextView) row.findViewById(R.id.book_cover)).setText(b.title);
-      GradientDrawable cover = new GradientDrawable();
-      cover.setColor(b.color);
-      cover.setCornerRadius(dp(4));
-      row.findViewById(R.id.book_cover).setBackground(cover);
-      ((TextView) row.findViewById(R.id.book_title)).setText(b.title);
-      ((TextView) row.findViewById(R.id.book_category))
-          .setText(b.category.toUpperCase(Locale.ROOT));
-      ((TextView) row.findViewById(R.id.book_author)).setText(b.author);
-      int available = library.available(b.id);
-      ((TextView) row.findViewById(R.id.book_stock))
-          .setText(
-              (available > 0 ? "Còn " + available + " bản" : "Hết bản · Có thể đăng ký chờ")
-                  + "  •  "
-                  + b.shelf);
-      row.setOnClickListener(v -> details(b));
-      target.addView(row);
     }
   }
 
@@ -311,7 +454,7 @@ public final class MainActivity extends AppCompatActivity {
               (d, w) ->
                   confirm(
                       "Ẩn “" + b.title + "” khỏi danh mục?",
-                      () -> run(s -> s.archive(role, b.id), "Đã ẩn sách.")));
+                      () -> viewModel.archive(role, b.id, today())));
     dialog.show();
   }
 
@@ -331,9 +474,7 @@ public final class MainActivity extends AppCompatActivity {
                       + "Nhận trong ngày hẹn. Nếu hết bản, yêu cầu vào hàng chờ theo thứ tự. Phiếu"
                       + " hết hạn khi qua ngày hẹn.",
                   () ->
-                      run(
-                          s -> s.reserve(role, Library.READER_ID, b.id, day, today()),
-                          "Đã ghi nhận yêu cầu. Xem trạng thái tại Phiếu mượn."));
+                      viewModel.reserve(role, b.id, day, today()));
             },
             now.get(Calendar.YEAR),
             now.get(Calendar.MONTH),
@@ -350,97 +491,153 @@ public final class MainActivity extends AppCompatActivity {
   }
 
   private void loans(boolean desk) {
-    content.addView(text(desk ? "Quầy mượn & trả" : "Hành trình đọc của bạn", 26, true));
-    content.addView(
-        text(
-            desk
-                ? "Kiểm tra sách và người nhận trước khi xác nhận."
-                : "Theo dõi lịch nhận, hạn trả và lịch sử ngay tại đây.",
-            14,
-            false));
-    boolean any = false;
+    content.addView(text(desk ? "Quầy mượn & trả" : "Phiếu mượn", 26, true));
+    content.addView(text(desk ? "Kiểm tra sách và người nhận trước khi xác nhận."
+        : "Theo dõi lịch nhận, hạn trả và lịch sử ngay tại đây.", 14, false));
+    List<Loan> entries = new java.util.ArrayList<>();
     for (int i = library.loans.size() - 1; i >= 0; i--) {
-      Loan l = library.loans.get(i);
-      if (!desk && !l.readerId.equals(Library.READER_ID)) continue;
-      any = true;
-      LinearLayout card = panel();
-      Book b = library.book(l.bookId);
-      card.addView(text(status(l), 12, true));
-      card.addView(text(b.title, 19, true));
-      card.addView(text("Phiếu #" + l.id.substring(0, 8) + " · " + l.readerId, 11, false));
-      card.addView(
-          text(
-              l.status == Status.BORROWED || l.status == Status.RETURNED
-                  ? "Hạn trả: " + date(l.dueDay) + " · Gia hạn: " + l.renewals + " lần"
-                  : "Hẹn nhận: " + date(l.pickupDay) + " · " + b.shelf,
-              14,
-              false));
-      if (l.status == Status.RETURNED)
-        card.addView(text("Đã trả: " + date(l.returnDay), 13, false));
-      long fine = library.fine(l, today());
-      if (fine > 0)
-        card.addView(
-            text(
-                "Phí quá hạn "
-                    + (l.status == Status.RETURNED ? "ghi nhận: " : "tạm tính: ")
-                    + money(fine),
-                14,
-                true));
-      if (desk && l.status == Status.RESERVED)
-        button(
-            card,
-            "Xác nhận bàn giao",
-            () ->
-                confirm(
-                    "Bàn giao “" + b.title + "” cho độc giả?",
-                    () -> run(s -> s.checkout(role, l.id, today()), "Đã bàn giao sách.")));
-      if (desk && l.status == Status.BORROWED)
-        button(
-            card,
-            "Xác nhận nhận trả",
-            () ->
-                confirm(
-                    "Đã nhận lại “"
-                        + b.title
-                        + "”? Phí quá hạn được ghi nhận, chưa phải thanh toán.",
-                    () -> run(s -> s.returnBook(role, l.id, today()), "Đã nhận trả sách.")));
-      if (!desk && role == Role.READER && l.status == Status.BORROWED)
-        button(
-            card,
-            "Gia hạn thêm " + library.renewalDays + " ngày",
-            () ->
-                confirm(
-                    "Gia hạn “" + b.title + "”?",
-                    () ->
-                        run(
-                            s -> s.renew(role, Library.READER_ID, l.id, today()),
-                            "Đã gia hạn phiếu.")));
-      if (!desk
-          && role == Role.READER
-          && (l.status == Status.RESERVED || l.status == Status.WAITING))
-        button(
-            card,
-            "Hủy yêu cầu",
-            () ->
-                confirm(
-                    "Hủy yêu cầu “" + b.title + "”?",
-                    () ->
-                        run(
-                            s -> s.cancel(role, Library.READER_ID, l.id, today()),
-                            "Đã hủy yêu cầu.")));
-      content.addView(card);
+      Loan loan = library.loans.get(i);
+      if (desk || loan.readerId.equals(Library.READER_ID)) entries.add(loan);
     }
-    if (!any) {
+    listAdapter.showLoans(entries, desk);
+    if (entries.isEmpty()) {
       LinearLayout empty = panel();
-      empty.addView(text("Một hành trình mới đang chờ", 21, true));
-      empty.addView(
-          text(
-              "Chọn một cuốn sách ở mục Khám phá và đặt ngày nhận. Phiếu mượn sẽ xuất hiện tại"
-                  + " đây.",
-              15,
-              false));
-      button(empty, "Khám phá sách", () -> navigation.setSelectedItemId(R.id.nav_explore));
+      empty.addView(text(desk ? "Chưa có phiếu tại quầy" : "Chưa có phiếu mượn", 21, true));
+      empty.addView(text(desk ? "Các phiếu mượn và trả sách sẽ xuất hiện tại đây."
+          : "Chọn sách ở mục Khám phá để đặt lịch nhận.", 15, false));
+      if (!desk) button(empty, "Khám phá sách", () -> navigation.setSelectedItemId(R.id.nav_explore));
       content.addView(empty);
+    }
+  }
+
+  private void bindLoan(View row, Loan loan, boolean desk) {
+    Book book = library.book(loan.bookId);
+    ((TextView) row.findViewById(R.id.loan_status)).setText(status(loan));
+    ((TextView) row.findViewById(R.id.loan_title)).setText(book.title);
+    ((TextView) row.findViewById(R.id.loan_reader))
+        .setText("Phiếu #" + loan.id.substring(0, 8) + " · " + loan.readerId);
+    ((TextView) row.findViewById(R.id.loan_date))
+        .setText(loan.status == Status.BORROWED || loan.status == Status.RETURNED
+            ? "Hạn trả: " + date(loan.dueDay) + " · Gia hạn: " + loan.renewals + " lần"
+            : "Hẹn nhận: " + date(loan.pickupDay) + " · " + book.shelf);
+    TextView returned = row.findViewById(R.id.loan_return);
+    returned.setVisibility(loan.status == Status.RETURNED ? View.VISIBLE : View.GONE);
+    returned.setText(loan.status == Status.RETURNED ? "Đã trả: " + date(loan.returnDay) : "");
+    long fine = library.fine(loan, today());
+    TextView fineView = row.findViewById(R.id.loan_fine);
+    fineView.setVisibility(fine > 0 ? View.VISIBLE : View.GONE);
+    fineView.setText(fine > 0 ? "Phí quá hạn "
+        + (loan.status == Status.RETURNED ? "ghi nhận: " : "tạm tính: ") + money(fine) : "");
+    MaterialButton action = row.findViewById(R.id.loan_action);
+    action.setVisibility(View.VISIBLE);
+    if (desk && loan.status == Status.RESERVED) {
+      action.setText("Xác nhận bàn giao");
+      action.setOnClickListener(v -> confirm("Bàn giao “" + book.title + "” cho độc giả?",
+          () -> viewModel.checkout(role, loan.id, today())));
+    } else if (desk && loan.status == Status.BORROWED) {
+      action.setText("Xác nhận nhận trả");
+      action.setOnClickListener(v -> confirm("Đã nhận lại “" + book.title
+          + "”? Phí quá hạn được ghi nhận, chưa phải thanh toán.",
+          () -> viewModel.returnBook(role, loan.id, today())));
+    } else if (!desk && role == Role.READER && loan.status == Status.BORROWED) {
+      action.setText("Gia hạn thêm " + library.renewalDays + " ngày");
+      action.setOnClickListener(v -> confirm("Gia hạn “" + book.title + "”?",
+          () -> viewModel.renew(role, loan.id, today())));
+    } else if (!desk && role == Role.READER
+        && (loan.status == Status.RESERVED || loan.status == Status.WAITING)) {
+      action.setText("Hủy yêu cầu");
+      action.setOnClickListener(v -> confirm("Hủy yêu cầu “" + book.title + "”?",
+          () -> viewModel.cancel(role, loan.id, today())));
+    } else {
+      action.setVisibility(View.GONE);
+      action.setOnClickListener(null);
+    }
+  }
+
+  private final class LibraryListAdapter extends androidx.recyclerview.widget.RecyclerView.Adapter<LibraryListAdapter.Holder> {
+    private List<Book> books = java.util.Collections.emptyList();
+    private List<Loan> loans = java.util.Collections.emptyList();
+    private boolean showBooks;
+    private boolean desk;
+
+    void showBooks(List<Book> values) {
+      int previous = getItemCount() - 1;
+      books = new java.util.ArrayList<>(values);
+      loans = java.util.Collections.emptyList();
+      showBooks = true;
+      if (previous > 0) notifyItemRangeRemoved(1, previous);
+      if (!books.isEmpty()) notifyItemRangeInserted(1, books.size());
+    }
+
+    void showLoans(List<Loan> values, boolean deskMode) {
+      books = java.util.Collections.emptyList();
+      loans = new java.util.ArrayList<>(values);
+      showBooks = false;
+      desk = deskMode;
+    }
+
+    @Override public int getItemCount() {
+      return 1 + (showBooks ? books.size() : loans.size());
+    }
+
+    @Override public int getItemViewType(int position) {
+      return position == 0 ? 0 : (showBooks ? 1 : 2);
+    }
+
+    @Override public Holder onCreateViewHolder(android.view.ViewGroup parent, int type) {
+      if (type == 1) return new Holder(getLayoutInflater().inflate(R.layout.item_book, parent, false));
+      if (type == 2) return new Holder(getLayoutInflater().inflate(R.layout.item_loan, parent, false));
+      android.widget.FrameLayout frame = new android.widget.FrameLayout(parent.getContext());
+      frame.setLayoutParams(new androidx.recyclerview.widget.RecyclerView.LayoutParams(-1, -2));
+      return new Holder(frame);
+    }
+
+    @Override public void onBindViewHolder(Holder holder, int position) {
+      if (position == 0) {
+        android.widget.FrameLayout frame = (android.widget.FrameLayout) holder.itemView;
+        if (content.getParent() instanceof android.view.ViewGroup) {
+          ((android.view.ViewGroup) content.getParent()).removeView(content);
+        }
+        frame.removeAllViews();
+        frame.addView(content);
+      } else if (showBooks) {
+        int index = position - 1;
+        Book b = books.get(index);
+        View row = holder.itemView;
+        if (row instanceof com.google.android.material.listitem.ListItemLayout) {
+          ((com.google.android.material.listitem.ListItemLayout) row).updateAppearance(index, books.size());
+        }
+        TextView coverView = row.findViewById(R.id.book_cover);
+        coverView.setText(b.title);
+        GradientDrawable cover = new GradientDrawable();
+        cover.setColor(b.color);
+        cover.setCornerRadius(dp(8));
+        coverView.setBackground(cover);
+        ((TextView) row.findViewById(R.id.book_title)).setText(b.title);
+        ((TextView) row.findViewById(R.id.book_category))
+            .setText(b.category.toUpperCase(Locale.ROOT) + "  ·  KỆ " + b.shelf.toUpperCase(Locale.ROOT));
+        ((TextView) row.findViewById(R.id.book_author)).setText(b.author);
+        int available = library.available(b.id);
+        TextView stockView = row.findViewById(R.id.book_stock);
+        if (available > 0) {
+          stockView.setText("● Còn " + available + " / " + b.copies + " bản");
+          stockView.setTextColor(getColor(R.color.forest));
+        } else {
+          stockView.setText("○ Hết bản  ·  Có thể đăng ký chờ");
+          stockView.setTextColor(getColor(R.color.muted));
+        }
+        row.setOnClickListener(v -> details(b));
+      } else {
+        int index = position - 1;
+        if (holder.itemView instanceof com.google.android.material.listitem.ListItemLayout) {
+          ((com.google.android.material.listitem.ListItemLayout) holder.itemView).updateAppearance(index, loans.size());
+        }
+        bindLoan(holder.itemView, loans.get(index), desk);
+      }
+    }
+
+    final class Holder extends androidx.recyclerview.widget.RecyclerView.ViewHolder {
+      Holder(View view) { super(view); }
     }
   }
 
@@ -490,7 +687,7 @@ public final class MainActivity extends AppCompatActivity {
   }
 
   private void profile() {
-    content.addView(text("Thư viện của chúng mình", 26, true));
+    content.addView(text("Thông tin thư viện", 26, true));
     button(
         content,
         "Kết nối thư viện Firebase",
@@ -582,12 +779,15 @@ public final class MainActivity extends AppCompatActivity {
                                 existing == null ? 0xFF20695C : existing.color);
                         // Validate using a fresh isolated state inside the transaction; errors keep
                         // the form open.
-                        saveForm(d, s -> s.saveBook(role, b, today()), "Đã lưu đầu sách.");
+                        activeForm = d;
+                        viewModel.saveBook(role, b, today());
                       } catch (NumberFormatException e) {
                         copies.setError("Nhập số nguyên từ 1 đến 999.");
                       }
                     }));
     d.show();
+    trackForm(d, "book", existing == null ? null : existing.id,
+        new EditText[] {title, author, categoryInput, isbn, shelf, copies, description});
   }
 
   private void editRules() {
@@ -621,49 +821,55 @@ public final class MainActivity extends AppCompatActivity {
                             c = Integer.parseInt(value(renewal)),
                             e = Integer.parseInt(value(count));
                         long f = Long.parseLong(value(fine));
-                        saveForm(d, s -> s.rules(role, a, b, c, e, f), "Đã cập nhật quy định.");
+                        activeForm = d;
+                        viewModel.saveRules(role, a, b, c, e, f, today());
                       } catch (NumberFormatException e) {
                         fine.setError("Các trường cần là số nguyên trong giới hạn ghi ở nhãn.");
                       }
                     }));
     d.show();
+    trackForm(d, "rules", null, new EditText[] {max, days, renewal, count, fine});
   }
 
-  private void saveForm(
-      androidx.appcompat.app.AlertDialog dialog, LibraryStore.Change change, String message) {
-    if (busy) return;
-    busy = true;
-    dialog.getButton(-1).setEnabled(false);
-    io.execute(
-        () -> {
-          try {
-            Library next = store.change(today(), change);
-            runOnUiThread(
-                () -> {
-                  if (isDestroyed()) return;
-                  busy = false;
-                  library = next;
-                  dialog.dismiss();
-                  render();
-                  notice(message);
-                });
-          } catch (Exception e) {
-            runOnUiThread(
-                () -> {
-                  if (isDestroyed()) return;
-                  busy = false;
-                  dialog.getButton(-1).setEnabled(true);
-                  new MaterialAlertDialogBuilder(this)
-                      .setTitle("Chưa thể lưu")
-                      .setMessage(
-                          e instanceof IllegalArgumentException
-                              ? e.getMessage()
-                              : "Không thể lưu dữ liệu. Kiểm tra dung lượng thiết bị và thử lại.")
-                      .setPositiveButton("Đã hiểu", null)
-                      .show();
-                });
+  private void trackForm(androidx.appcompat.app.AlertDialog dialog, String type,
+      String bookId, EditText[] fields) {
+    activeForm = dialog;
+    formType = type;
+    formBookId = bookId;
+    formFields = fields;
+    dialog.getButton(-1).setEnabled(!viewModel.getState().getValue().loading);
+    dialog.setOnDismissListener(d -> {
+      if (activeForm == dialog) {
+        activeForm = null;
+        formFields = null;
+      }
+    });
+  }
+
+  private void restoreForm() {
+    if (pendingForm == null || library == null) return;
+    Bundle form = pendingForm;
+    pendingForm = null;
+    if ("rules".equals(form.getString("type"))) {
+      editRules();
+    } else if ("book".equals(form.getString("type"))) {
+      String id = form.getString("book_id");
+      Book book = null;
+      if (id != null) {
+        for (Book candidate : library.books) {
+          if (id.equals(candidate.id)) {
+            book = candidate;
+            break;
           }
-        });
+        }
+        if (book == null) return;
+      }
+      editBook(book);
+    }
+    String[] values = form.getStringArray("values");
+    if (values != null && formFields != null && values.length == formFields.length) {
+      for (int i = 0; i < values.length; i++) formFields[i].setText(values[i]);
+    }
   }
 
   private String status(Loan l) {
@@ -694,9 +900,11 @@ public final class MainActivity extends AppCompatActivity {
   }
 
   private void notice(String message) {
-    Snackbar.make(findViewById(R.id.main), message, Snackbar.LENGTH_LONG)
-        .setAnchorView(navigation)
-        .show();
+    Snackbar snackbar = Snackbar.make(findViewById(R.id.main), message, Snackbar.LENGTH_LONG);
+    if (navigation instanceof com.google.android.material.bottomnavigation.BottomNavigationView) {
+      snackbar.setAnchorView(navigation);
+    }
+    snackbar.show();
   }
 
   private LinearLayout column() {
@@ -730,10 +938,14 @@ public final class MainActivity extends AppCompatActivity {
   }
 
   private void button(LinearLayout parent, String label, Runnable action) {
-    MaterialButton b = new MaterialButton(this);
+    MaterialButton b = new MaterialButton(this, null, com.google.android.material.R.attr.materialButtonTonalStyle);
     b.setText(label);
     b.setMinHeight(dp(48));
-    b.setCornerRadius(dp(8));
+    b.setCornerRadius(dp(20));
+    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+    lp.topMargin = dp(8);
+    lp.bottomMargin = dp(4);
+    b.setLayoutParams(lp);
     b.setOnClickListener(
         v -> {
           if (!busy) action.run();
@@ -754,8 +966,15 @@ public final class MainActivity extends AppCompatActivity {
   }
 
   private EditText field(LinearLayout parent, String label, String initial, boolean numeric) {
-    TextInputLayout wrap = new TextInputLayout(this);
+    TextInputLayout wrap = new TextInputLayout(this, null, com.google.android.material.R.attr.textInputOutlinedStyle);
     wrap.setHint(label);
+    wrap.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
+    int r = dp(16);
+    wrap.setBoxCornerRadii(r, r, r, r);
+    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+    lp.topMargin = dp(6);
+    lp.bottomMargin = dp(6);
+    wrap.setLayoutParams(lp);
     TextInputEditText input = new TextInputEditText(this);
     input.setText(initial);
     input.setInputType(

@@ -11,7 +11,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 import com.example.smartlibandbookhub.data.LibraryStore;
 import com.example.smartlibandbookhub.domain.Library;
-import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationBarView;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -60,9 +60,9 @@ public class AndroidFlowTest {
       scenario.onActivity(
           a -> {
             assertTrue(contains(a.findViewById(R.id.content), "Nhà giả kim"));
-            BottomNavigationView nav = a.findViewById(R.id.navigation);
+            NavigationBarView nav = a.findViewById(R.id.navigation);
             nav.setSelectedItemId(R.id.nav_loans);
-            assertTrue(contains(a.findViewById(R.id.content), "Một hành trình mới"));
+            assertTrue(contains(a.findViewById(R.id.content), "Chưa có phiếu mượn"));
             nav.setSelectedItemId(R.id.nav_manage);
             assertTrue(contains(a.findViewById(R.id.content), "không phải cơ chế đăng nhập"));
             nav.setSelectedItemId(R.id.nav_profile);

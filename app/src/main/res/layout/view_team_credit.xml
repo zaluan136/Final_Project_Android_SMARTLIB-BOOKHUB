@@ -3,9 +3,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingHorizontal="16dp"
-    android:paddingVertical="6dp"
+    android:paddingVertical="8dp"
     android:gravity="center"
-    android:background="@color/surface"
+    android:background="@color/surface_container"
     android:text="@string/team_credit"
-    android:textColor="@color/forest"
+    android:textColor="@color/muted"
     android:textSize="12sp" />

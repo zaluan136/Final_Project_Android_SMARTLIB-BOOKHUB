@@ -1,19 +1,103 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp" android:padding="@dimen/card_padding"
-    android:gravity="center_vertical" android:orientation="horizontal"
-    android:background="@drawable/panel" android:clickable="true" android:focusable="true"
+<com.google.android.material.listitem.ListItemLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="6dp"
+    android:clickable="true"
+    android:focusable="true"
     android:foreground="?attr/selectableItemBackground">
-    <TextView android:id="@+id/book_cover" android:layout_width="72dp" android:layout_height="100dp"
-        android:padding="8dp" android:gravity="center" android:textColor="#FFFFFF"
-        android:textSize="12sp" android:textStyle="bold" android:maxLines="4"
-        android:ellipsize="end" android:importantForAccessibility="no" />
-    <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
-        android:layout_marginStart="16dp" android:orientation="vertical">
-        <TextView android:id="@+id/book_category" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/forest" android:textStyle="bold" />
-        <TextView android:id="@+id/book_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:textSize="18sp" android:textColor="@color/ink" android:textStyle="bold" />
-        <TextView android:id="@+id/book_author" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:textSize="14sp" android:textColor="@color/muted" />
-        <TextView android:id="@+id/book_stock" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textSize="13sp" android:textColor="@color/forest" />
-    </LinearLayout>
-</LinearLayout>
+    <com.google.android.material.listitem.ListItemCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:duplicateParentState="true"
+        app:cardBackgroundColor="@color/surface_container_lowest"
+        app:strokeColor="@color/outline_variant"
+        app:strokeWidth="1dp"
+        app:cardElevation="0dp">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:gravity="center_vertical"
+            android:minHeight="124dp"
+            android:orientation="horizontal"
+            android:padding="14dp">
+
+            <!-- Book Cover -->
+            <FrameLayout
+                android:layout_width="76dp"
+                android:layout_height="108dp">
+                <TextView
+                    android:id="@+id/book_cover"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:ellipsize="end"
+                    android:gravity="center"
+                    android:importantForAccessibility="no"
+                    android:maxLines="4"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="6dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+                <!-- Spine shadow -->
+                <View
+                    android:layout_width="4dp"
+                    android:layout_height="match_parent"
+                    android:background="#20000000" />
+            </FrameLayout>
+
+            <!-- Book Details -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/book_category"
+                    style="?attr/textAppearanceLabelSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.05"
+                    android:textColor="?attr/colorSecondary" />
+
+                <TextView
+                    android:id="@+id/book_title"
+                    style="?attr/textAppearanceTitleMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    android:textColor="?attr/colorOnSurface" />
+
+                <TextView
+                    android:id="@+id/book_author"
+                    style="?attr/textAppearanceBodyMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:singleLine="true"
+                    android:ellipsize="end"
+                    android:textColor="?attr/colorOnSurfaceVariant" />
+
+                <TextView
+                    android:id="@+id/book_stock"
+                    style="?attr/textAppearanceLabelMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:textColor="?attr/colorPrimary" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.listitem.ListItemCardView>
+</com.google.android.material.listitem.ListItemLayout>

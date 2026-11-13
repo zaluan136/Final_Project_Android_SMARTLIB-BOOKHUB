@@ -1,8 +1,79 @@
 <resources>
-<style name="Theme.BookHub" parent="Theme.Material3.DayNight.NoActionBar">
-<item name="colorPrimary">@color/forest</item><item name="colorOnPrimary">@color/paper</item>
-<item name="colorSecondaryContainer">@color/mint</item><item name="colorOnSecondaryContainer">@color/forest</item><item name="colorSurfaceContainer">@color/surface</item>
-<item name="colorSurface">@color/surface</item><item name="colorOnSurface">@color/ink</item>
-<item name="android:windowBackground">@color/paper</item><item name="android:fontFamily">sans</item>
-<item name="android:colorAccent">@color/forest</item>
-</style></resources>
+    <style name="Theme.BookHub" parent="Theme.Material3Expressive.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/forest</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorPrimaryContainer">@color/primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/on_primary_container</item>
+
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+        <item name="colorSecondaryContainer">@color/secondary_container</item>
+        <item name="colorOnSecondaryContainer">@color/on_secondary_container</item>
+
+        <item name="colorTertiary">@color/tertiary</item>
+        <item name="colorOnTertiary">@color/on_tertiary</item>
+        <item name="colorTertiaryContainer">@color/tertiary_container</item>
+        <item name="colorOnTertiaryContainer">@color/on_tertiary_container</item>
+
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/on_error</item>
+        <item name="colorErrorContainer">@color/error_container</item>
+        <item name="colorOnErrorContainer">@color/on_error_container</item>
+
+        <item name="android:colorBackground">@color/paper</item>
+        <item name="colorOnBackground">@color/ink</item>
+        <item name="android:windowBackground">@color/paper</item>
+
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/ink</item>
+        <item name="colorSurfaceVariant">@color/surface_variant</item>
+        <item name="colorOnSurfaceVariant">@color/muted</item>
+
+        <item name="colorSurfaceContainerLowest">@color/surface_container_lowest</item>
+        <item name="colorSurfaceContainerLow">@color/surface_container_low</item>
+        <item name="colorSurfaceContainer">@color/surface_container</item>
+        <item name="colorSurfaceContainerHigh">@color/surface_container_high</item>
+        <item name="colorSurfaceContainerHighest">@color/surface_container_highest</item>
+
+        <item name="colorOutline">@color/outline</item>
+        <item name="colorOutlineVariant">@color/outline_variant</item>
+
+        <item name="android:colorAccent">@color/forest</item>
+        <item name="android:fontFamily">sans-serif</item>
+
+        <!-- Global M3 Component Styles -->
+        <item name="materialCardViewStyle">@style/Widget.Material3.CardView.Filled</item>
+        <item name="materialButtonStyle">@style/Widget.Material3Expressive.Button</item>
+        <item name="materialButtonTonalStyle">@style/Widget.Material3Expressive.Button.TonalButton</item>
+        <item name="materialButtonOutlinedStyle">@style/Widget.Material3Expressive.Button.OutlinedButton</item>
+        <item name="chipStyle">@style/Widget.Material3.Chip.Filter</item>
+        <item name="textInputStyle">@style/Widget.Material3.TextInputLayout.OutlinedBox</item>
+        <item name="bottomNavigationStyle">@style/Widget.Material3Expressive.BottomNavigationView</item>
+        <item name="navigationRailStyle">@style/Widget.Material3Expressive.NavigationRailView</item>
+        <item name="materialSearchBarStyle">@style/Widget.Material3Expressive.SearchBar</item>
+        <item name="materialSearchViewStyle">@style/Widget.Material3Expressive.SearchView</item>
+        <item name="linearProgressIndicatorStyle">@style/Widget.Material3Expressive.LinearProgressIndicator</item>
+
+        <!-- Global Shape Tokens -->
+        <item name="shapeAppearanceCornerSmall">@style/ShapeAppearance.BookHub.SmallComponent</item>
+        <item name="shapeAppearanceCornerMedium">@style/ShapeAppearance.BookHub.MediumComponent</item>
+        <item name="shapeAppearanceCornerLarge">@style/ShapeAppearance.BookHub.LargeComponent</item>
+        <item name="shapeAppearanceCornerExtraLarge">@style/ShapeAppearance.BookHub.ExtraLargeComponent</item>
+    </style>
+
+    <style name="ShapeAppearance.BookHub.SmallComponent" parent="ShapeAppearance.Material3.Corner.Small">
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="ShapeAppearance.BookHub.MediumComponent" parent="ShapeAppearance.Material3.Corner.Medium">
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <style name="ShapeAppearance.BookHub.LargeComponent" parent="ShapeAppearance.Material3.Corner.Large">
+        <item name="cornerSize">20dp</item>
+    </style>
+
+    <style name="ShapeAppearance.BookHub.ExtraLargeComponent" parent="ShapeAppearance.Material3.Corner.ExtraLarge">
+        <item name="cornerSize">28dp</item>
+    </style>
+</resources>
