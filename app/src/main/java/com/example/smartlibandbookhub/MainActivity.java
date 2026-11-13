@@ -1,7 +1,6 @@
 package com.example.smartlibandbookhub;
 
 import android.app.DatePickerDialog;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
@@ -185,26 +184,14 @@ public final class MainActivity extends AppCompatActivity {
   }
 
   private void explore() {
-    LinearLayout hero = column();
-    hero.setBackgroundResource(R.drawable.hero);
-    hero.setPadding(dp(20), dp(20), dp(20), dp(20));
-    TextView eyebrow = text("KHÔNG GIAN CỦA TRI THỨC", 11, true);
-    eyebrow.setTextColor(0xFFB9DECD);
-    hero.addView(eyebrow);
-    TextView title = text("Cuốn sách tiếp theo,\ncảm hứng tiếp theo.", 24, true);
-    title.setTextColor(Color.WHITE);
-    hero.addView(title);
-    TextView subtitle = text("Khám phá · Đặt lịch · Đọc theo cách của bạn", 12, false);
-    subtitle.setTextColor(0xFFD5EADD);
-    hero.addView(subtitle);
-    content.addView(hero);
-    TextView hint = text("Thư viện mở cửa 08:00–17:00 · Lịch minh họa", 12, false);
-    hint.setPadding(0, dp(12), 0, dp(12));
+    content.addView(text("Danh mục sách", 24, true));
+    TextView hint = text("Tìm sách và đặt lịch nhận tại thư viện.", 14, false);
+    hint.setPadding(0, 0, 0, dp(16));
     content.addView(hint);
     TextInputLayout input = new TextInputLayout(this);
     input.setHint(getString(R.string.search_hint));
     input.setBoxBackgroundMode(TextInputLayout.BOX_BACKGROUND_OUTLINE);
-    input.setBoxCornerRadii(dp(14), dp(14), dp(14), dp(14));
+    input.setBoxCornerRadii(dp(8), dp(8), dp(8), dp(8));
     TextInputEditText search = new TextInputEditText(this);
     search.setSingleLine(true);
     search.setText(query);
@@ -256,21 +243,22 @@ public final class MainActivity extends AppCompatActivity {
     List<Book> books = library.search(query, category);
     target.addView(
         text(
-            query.isEmpty() ? "Tủ sách dành cho bạn" : "Kết quả tìm kiếm · " + books.size(),
+            query.isEmpty() ? "Danh sách sách" : "Kết quả tìm kiếm · " + books.size(),
             20,
             true));
     if (books.isEmpty()) {
-      target.addView(
-          text("Chưa tìm thấy sách phù hợp. Thử tên tác giả hoặc bỏ bộ lọc thể loại.", 15, false));
+      LinearLayout empty = panel();
+      empty.addView(text("Không tìm thấy sách", 18, true));
+      empty.addView(text("Thử tên tác giả hoặc bỏ bộ lọc thể loại.", 15, false));
+      target.addView(empty);
       return;
     }
     for (Book b : books) {
       View row = getLayoutInflater().inflate(R.layout.item_book, target, false);
       ((TextView) row.findViewById(R.id.book_cover)).setText(b.title);
-      GradientDrawable cover =
-          new GradientDrawable(
-              GradientDrawable.Orientation.TL_BR, new int[] {b.color, darken(b.color)});
-      cover.setCornerRadius(dp(8));
+      GradientDrawable cover = new GradientDrawable();
+      cover.setColor(b.color);
+      cover.setCornerRadius(dp(4));
       row.findViewById(R.id.book_cover).setBackground(cover);
       ((TextView) row.findViewById(R.id.book_title)).setText(b.title);
       ((TextView) row.findViewById(R.id.book_category))
@@ -724,7 +712,8 @@ public final class MainActivity extends AppCompatActivity {
     lp.topMargin = dp(14);
     lp.bottomMargin = dp(4);
     v.setLayoutParams(lp);
-    v.setPadding(dp(20), dp(16), dp(20), dp(16));
+    int padding = getResources().getDimensionPixelSize(R.dimen.card_padding);
+    v.setPadding(padding, padding, padding, padding);
     v.setBackgroundResource(R.drawable.panel);
     return v;
   }
@@ -744,6 +733,7 @@ public final class MainActivity extends AppCompatActivity {
     MaterialButton b = new MaterialButton(this);
     b.setText(label);
     b.setMinHeight(dp(48));
+    b.setCornerRadius(dp(8));
     b.setOnClickListener(
         v -> {
           if (!busy) action.run();
@@ -784,11 +774,6 @@ public final class MainActivity extends AppCompatActivity {
 
   private int dp(int n) {
     return Math.round(n * getResources().getDisplayMetrics().density);
-  }
-
-  private int darken(int c) {
-    return Color.rgb(
-        (int) (Color.red(c) * .68), (int) (Color.green(c) * .68), (int) (Color.blue(c) * .68));
   }
 
   private String money(long amount) {

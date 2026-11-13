@@ -1,1 +1,4 @@
-<shape xmlns:android="http://schemas.android.com/apk/res/android"><gradient android:startColor="#124E43" android:endColor="#297768" android:angle="0"/><corners android:radius="24dp"/></shape>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@color/hero_background" />
+    <corners android:radius="24dp" />
+</shape>
