@@ -1,1 +1,11 @@
-<resources><color name="forest">#A0D5C2</color><color name="ink">#E2EEE7</color><color name="muted">#ADBBB3</color><color name="paper">#111D18</color><color name="surface">#1B2B23</color><color name="mint">#293F33</color><color name="outline">#3D5145</color><color name="amber">#EDBE80</color></resources>
+<resources>
+    <color name="forest">#A8CDBF</color>
+    <color name="ink">#E2E7E4</color>
+    <color name="muted">#ADB8B2</color>
+    <color name="paper">#151A18</color>
+    <color name="surface">#202723</color>
+    <color name="mint">#30443A</color>
+    <color name="outline">#414D46</color>
+    <color name="amber">#EDBE80</color>
+    <color name="hero_background">#315C52</color>
+</resources>

@@ -119,18 +119,23 @@ public final class FirebaseActivity extends AppCompatActivity {
           });
       return;
     }
-    label("Đang tải dữ liệu từ máy chủ…", 14);
+    TextView loading = label("Đang tải dữ liệu từ máy chủ…", 14);
     user.getIdToken(true)
         .addOnSuccessListener(
             this,
             token -> {
               if (current != generation) return;
+              content.removeView(loading);
               Object claim = token.getClaims().get("role");
               role = claim instanceof String ? (String) claim : "reader";
               label("Vai trò được cấp: " + role, 14);
               catalogue(current);
             })
-        .addOnFailureListener(this, e -> message("Không thể xác thực phiên. Hãy đăng nhập lại."));
+        .addOnFailureListener(this, e -> {
+          if (current != generation) return;
+          loading.setText("Không thể kết nối hoặc xác thực phiên. Kiểm tra mạng và thử lại.");
+          button("Thử lại", this::screen);
+        });
   }
 
   private void login() {
@@ -261,6 +266,7 @@ public final class FirebaseActivity extends AppCompatActivity {
               label(
                   staff ? "Quầy mượn–trả (tối đa 100 phiếu)" : "Phiếu của bạn (tối đa 100 phiếu)",
                   22);
+              if (snapshot.isEmpty()) label("Chưa có phiếu mượn nào.", 15);
               for (DocumentSnapshot loan : snapshot.getDocuments()) {
                 String status = loan.getString("status");
                 label(loan.getString("title") + " · " + status, 16);
@@ -340,18 +346,23 @@ public final class FirebaseActivity extends AppCompatActivity {
       new MaterialAlertDialogBuilder(this).setMessage(text).setPositiveButton("Đóng", null).show();
   }
 
-  private void label(String text, int size) {
+  private TextView label(String text, int size) {
     TextView v = new TextView(this);
     v.setText(text);
     v.setTextSize(size);
     v.setTextColor(getColor(R.color.ink));
-    v.setPadding(0, 14, 0, 14);
+    int spacing = Math.round(8 * getResources().getDisplayMetrics().density);
+    v.setPadding(0, spacing, 0, spacing);
+    if (size >= 20) v.setTypeface(null, android.graphics.Typeface.BOLD);
     content.addView(v);
+    return v;
   }
 
   private void button(String text, Runnable action) {
     MaterialButton b = new MaterialButton(this);
     b.setText(text);
+    b.setMinHeight(Math.round(48 * getResources().getDisplayMetrics().density));
+    b.setCornerRadius(Math.round(8 * getResources().getDisplayMetrics().density));
     b.setOnClickListener(
         v -> {
           if (!busy) action.run();
