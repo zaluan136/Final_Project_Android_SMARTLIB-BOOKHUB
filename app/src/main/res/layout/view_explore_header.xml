@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/content" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:orientation="vertical">
+    <TextView android:id="@+id/explore_first_book" android:layout_width="wrap_content"
+        android:layout_height="wrap_content" android:visibility="gone" />
+    <TextView android:id="@+id/explore_count" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:paddingTop="6dp" android:paddingBottom="8dp"
+        android:lineSpacingExtra="3dp" android:textColor="@color/ink" android:textSize="18sp"
+        android:textStyle="bold" />
+    <LinearLayout android:id="@+id/explore_empty" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:layout_marginTop="14dp" android:layout_marginBottom="4dp"
+        android:background="@drawable/panel" android:orientation="vertical" android:padding="@dimen/card_padding">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:paddingTop="6dp" android:paddingBottom="8dp" android:text="@string/no_books"
+            android:textColor="@color/ink" android:textSize="18sp" android:textStyle="bold" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:paddingTop="6dp" android:paddingBottom="8dp" android:lineSpacingExtra="3dp"
+            android:text="@string/no_books_description" android:textColor="@color/muted" android:textSize="15sp" />
+    </LinearLayout>
+</LinearLayout>

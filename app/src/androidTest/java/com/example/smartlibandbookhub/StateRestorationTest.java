@@ -32,6 +32,8 @@ public class StateRestorationTest {
       scenario.onActivity(activity -> {
         NavigationBarView navigation = activity.findViewById(R.id.navigation);
         assertEquals(R.id.nav_profile, navigation.getSelectedItemId());
+        assertEquals(View.VISIBLE, activity.findViewById(R.id.profile_container).getVisibility());
+        assertTrue(activity.findViewById(R.id.profile_rules) instanceof android.widget.TextView);
       });
     }
   }

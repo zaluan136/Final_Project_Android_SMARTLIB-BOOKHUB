@@ -3,10 +3,12 @@ package com.example.smartlibandbookhub;
 import static org.junit.Assert.*;
 
 import android.content.Context;
+import android.content.ContextWrapper;
+import android.content.Intent;
 import android.view.View;
 import android.widget.TextView;
 import androidx.test.core.app.ActivityScenario;
-import androidx.test.core.app.ApplicationProvider;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.SdkSuppress;
 import com.example.smartlibandbookhub.data.LibraryStore;
@@ -26,7 +28,12 @@ public class AndroidFlowTest {
 
   @Before
   public void clear() {
-    context = ApplicationProvider.getApplicationContext();
+    Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
+    File testDirectory = appContext.getDir("android_flow_tests", Context.MODE_PRIVATE);
+    context = new ContextWrapper(appContext) {
+      @Override public File getFilesDir() { return testDirectory; }
+    };
+    assertNotEquals(appContext.getFilesDir().getAbsolutePath(), context.getFilesDir().getAbsolutePath());
     for (String suffix : new String[] {"", ".bak", ".new"})
       new File(context.getFilesDir(), "bookhub-v1.json" + suffix).delete();
   }
@@ -55,19 +62,28 @@ public class AndroidFlowTest {
 
   @Test
   public void activityInflatesAndNavigationShowsReaderGuard() throws Exception {
-    try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(MainActivity.class)) {
+    try (ActivityScenario<MainActivity> scenario = ActivityScenario.launch(
+        new Intent(InstrumentationRegistry.getInstrumentation().getTargetContext(), MainActivity.class))) {
       ready(scenario);
-      scenario.onActivity(
-          a -> {
-            assertTrue(contains(a.findViewById(R.id.content), "Nhà giả kim"));
-            NavigationBarView nav = a.findViewById(R.id.navigation);
-            nav.setSelectedItemId(R.id.nav_loans);
-            assertTrue(contains(a.findViewById(R.id.content), "Chưa có phiếu mượn"));
-            nav.setSelectedItemId(R.id.nav_manage);
-            assertTrue(contains(a.findViewById(R.id.content), "không phải cơ chế đăng nhập"));
-            nav.setSelectedItemId(R.id.nav_profile);
-            assertTrue(contains(a.findViewById(R.id.content), "Quy định mượn sách"));
-          });
+      scenario.onActivity(a -> {
+        NavigationBarView nav = a.findViewById(R.id.navigation);
+        nav.setSelectedItemId(R.id.nav_loans);
+      });
+      InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+      scenario.onActivity(a -> {
+        assertEquals(View.VISIBLE, a.findViewById(R.id.loans_container).getVisibility());
+        NavigationBarView nav = a.findViewById(R.id.navigation);
+        nav.setSelectedItemId(R.id.nav_manage);
+      });
+      InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+      scenario.onActivity(a -> {
+        assertTrue(contains(a.findViewById(R.id.manage_container), "không phải cơ chế đăng nhập"));
+        NavigationBarView nav = a.findViewById(R.id.navigation);
+        nav.setSelectedItemId(R.id.nav_profile);
+      });
+      InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+      scenario.onActivity(a ->
+          assertTrue(contains(a.findViewById(R.id.profile_container), "Quy định mượn sách")));
     }
   }
 

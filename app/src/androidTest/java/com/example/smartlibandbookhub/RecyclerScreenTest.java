@@ -40,7 +40,7 @@ public class RecyclerScreenTest {
         NavigationBarView navigation = activity.findViewById(R.id.navigation);
         navigation.setSelectedItemId(R.id.nav_loans);
       });
-      onView(allOf(withText("Phiếu mượn"), isDescendantOfA(withId(R.id.content))))
+      onView(allOf(withText("Phiếu mượn"), isDescendantOfA(withId(R.id.loans_container))))
           .check(matches(isDisplayed()));
     }
   }

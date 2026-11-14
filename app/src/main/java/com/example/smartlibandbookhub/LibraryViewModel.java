@@ -15,6 +15,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class LibraryViewModel extends AndroidViewModel {
+  public enum SortBy {
+    DEFAULT("Mặc định"),
+    TITLE_AZ("Tên (A → Z)"),
+    TITLE_ZA("Tên (Z → A)"),
+    AVAILABLE_FIRST("Còn sẵn trước"),
+    COPIES_DESC("Nhiều bản nhất");
+
+    final String label;
+    SortBy(String label) { this.label = label; }
+  }
+
   private interface Operation {
     void apply(Library library, Library.Role role, long today);
   }
@@ -85,6 +96,33 @@ public final class LibraryViewModel extends AndroidViewModel {
   public void setTab(int tab) { savedState.set("tab", tab); publish(); }
   public void setQuery(String query) { savedState.set("query", query); publish(); }
   public void setCategory(String category) { savedState.set("category", category); publish(); }
+  public void setSortBy(SortBy sortBy) { savedState.set("sort_by", sortBy.name()); publish(); }
+  public void setOnlyAvailable(boolean onlyAvailable) { savedState.set("only_available", onlyAvailable); publish(); }
+
+
+  public java.util.List<Library.Book> getFilteredBooks(String query, String category,
+      boolean onlyAvailable, SortBy sortBy) {
+    if (library == null) return java.util.Collections.emptyList();
+    java.util.List<Library.Book> books = new java.util.ArrayList<>(library.search(query, category));
+    if (onlyAvailable) books.removeIf(book -> library.available(book.id) <= 0);
+    switch (sortBy) {
+      case TITLE_AZ:
+        books.sort((a, b) -> a.title.compareToIgnoreCase(b.title));
+        break;
+      case TITLE_ZA:
+        books.sort((a, b) -> b.title.compareToIgnoreCase(a.title));
+        break;
+      case AVAILABLE_FIRST:
+        books.sort((a, b) -> Integer.compare(library.available(b.id), library.available(a.id)));
+        break;
+      case COPIES_DESC:
+        books.sort((a, b) -> Integer.compare(b.copies, a.copies));
+        break;
+      default:
+        break;
+    }
+    return books;
+  }
 
   public LiveData<UiState> getState() { return state; }
 
