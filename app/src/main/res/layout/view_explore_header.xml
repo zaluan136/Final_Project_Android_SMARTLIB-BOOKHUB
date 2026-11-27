@@ -6,8 +6,8 @@
         android:layout_height="wrap_content" android:visibility="gone" />
     <TextView android:id="@+id/explore_count" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:paddingTop="6dp" android:paddingBottom="8dp"
-        android:lineSpacingExtra="3dp" android:textColor="@color/ink" android:textSize="18sp"
-        android:textStyle="bold" />
+        style="?attr/textAppearanceTitleLarge"
+        android:lineSpacingExtra="3dp" android:textColor="?attr/colorOnSurface" />
     <LinearLayout android:id="@+id/explore_empty" android:layout_width="match_parent"
         android:layout_height="wrap_content" android:layout_marginTop="14dp" android:layout_marginBottom="4dp"
         android:background="@drawable/panel" android:orientation="vertical" android:padding="@dimen/card_padding">

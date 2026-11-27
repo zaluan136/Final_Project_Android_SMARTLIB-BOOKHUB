@@ -7,7 +7,7 @@
         android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:paddingTop="6dp" android:paddingBottom="8dp" android:text="@string/management_space"
-            android:textColor="@color/ink" android:textSize="26sp" android:textStyle="bold" />
+            android:textColor="?attr/colorOnSurface" android:textAppearance="?attr/textAppearanceHeadlineSmall" />
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:paddingTop="6dp" android:paddingBottom="8dp" android:lineSpacingExtra="3dp"
             android:text="@string/management_reader_guard" android:textColor="@color/muted" android:textSize="16sp" />
@@ -35,7 +35,7 @@
         </LinearLayout>
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:paddingTop="6dp" android:paddingBottom="8dp" android:text="@string/loan_desk"
-            android:textColor="@color/ink" android:textSize="26sp" android:textStyle="bold" />
+            android:textColor="?attr/colorOnSurface" android:textAppearance="?attr/textAppearanceHeadlineSmall" />
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:paddingTop="6dp" android:paddingBottom="8dp" android:lineSpacingExtra="3dp"
             android:text="@string/loan_desk_description" android:textColor="@color/muted" android:textSize="14sp" />

@@ -13,6 +13,7 @@
     <string name="reader_role">Độc giả</string>
     <string name="cover">Bìa minh họa</string>
     <string name="sort">Sắp xếp</string>
+    <string name="sort_selected">Sắp xếp: %1$s</string>
     <string name="only_available">Có sẵn</string>
     <string name="team_credit">524H0098 - Nguyễn Hòa Khang\n524H0109 - Lý Gia Luân</string>
     <string name="library_information">Thông tin thư viện</string>
@@ -24,6 +25,7 @@
     <string name="library_shelf_map">TẦNG 1  ·  A — Văn học\nTẦNG 2  ·  B — Kỹ năng, C — Công nghệ\nTẦNG 3  ·  D — Khoa học\n\nSơ đồ minh họa. Xem vị trí cụ thể trong từng đầu sách.</string>
     <string name="demo_about_title">BookHub · Bản demo học tập</string>
     <string name="demo_about_details">Java + XML · Lưu dữ liệu riêng trên thiết bị.\n\nKhông có tài khoản thật, đồng bộ hoặc thông báo đẩy. Chuyển vai trò chỉ để trình diễn. Chưa tích hợp camera QR, RFID hay trang quản trị web.\n\nDanh mục mẫu giúp kiểm thử quy trình; không dùng dữ liệu cá nhân thật trong bản demo.</string>
+    <string name="overdue_reminder">Bạn có %1$d sách quá hạn. Vui lòng trả sách sớm.</string>
     <string name="loans_description">Theo dõi lịch nhận, hạn trả và lịch sử ngay tại đây.</string>
     <string name="no_loans">Chưa có phiếu mượn</string>
     <string name="no_loans_description">Chọn sách ở mục Khám phá để đặt lịch nhận.</string>
@@ -40,6 +42,12 @@
     <string name="no_desk_loans_description">Các phiếu mượn và trả sách sẽ xuất hiện tại đây.</string>
     <string name="catalog_count">Danh mục sách (%1$d)</string>
     <string name="search_result_count">Kết quả tìm kiếm · %1$d</string>
+    <string name="book_about">Giới thiệu</string>
+    <string name="book_information">Thông tin mượn</string>
+    <string name="book_availability">Còn %1$d / %2$d bản</string>
+    <string name="book_unavailable">Hiện hết sách · Có thể đăng ký chờ</string>
+    <string name="book_detail_info">Vị trí: %1$s\nISBN: %2$s\nThời hạn mượn: %3$d ngày\nPhí quá hạn: %4$s/ngày</string>
+    <string name="book_description_empty">Chưa có mô tả cho sách này.</string>
     <string name="no_books">Không tìm thấy sách</string>
     <string name="no_books_description">Thử tên tác giả hoặc bỏ bộ lọc thể loại.</string>
 </resources>

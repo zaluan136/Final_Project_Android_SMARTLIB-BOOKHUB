@@ -28,29 +28,24 @@ final class BookDialogs {
   }
 
   void showDetails(Book b) {
-    String message =
-        b.author
-            + "\n\n"
-            + b.description
-            + "\n\nThể loại: "
-            + b.category
-            + "\nVị trí: "
-            + b.shelf
-            + "\nISBN: "
-            + b.isbn
-            + "\nSẵn sàng: "
-            + library.available(b.id)
-            + " / "
-            + b.copies
-            + " bản\n\nMượn "
-            + library.loanDays
-            + " ngày · Phí quá hạn "
-            + LibraryFormat.money(library.dailyFine)
-            + "/ngày.\nBìa và danh mục dùng cho bản demo.";
+    android.view.View details = android.view.LayoutInflater.from(context)
+        .inflate(R.layout.dialog_book_details, null);
+    ((android.widget.TextView) details.findViewById(R.id.detail_cover)).setText(b.title);
+    ((android.widget.TextView) details.findViewById(R.id.detail_title)).setText(b.title);
+    ((android.widget.TextView) details.findViewById(R.id.detail_author)).setText(b.author);
+    ((android.widget.TextView) details.findViewById(R.id.detail_category)).setText(b.category);
+    ((android.widget.TextView) details.findViewById(R.id.detail_description)).setText(
+        b.description.trim().isEmpty() ? context.getString(R.string.book_description_empty) : b.description);
+    int available = library.available(b.id);
+    ((android.widget.TextView) details.findViewById(R.id.detail_availability)).setText(
+        available > 0 ? context.getString(R.string.book_availability, available, b.copies)
+            : context.getString(R.string.book_unavailable));
+    ((android.widget.TextView) details.findViewById(R.id.detail_info)).setText(
+        context.getString(R.string.book_detail_info, b.shelf, b.isbn, library.loanDays,
+            LibraryFormat.money(library.dailyFine)));
     MaterialAlertDialogBuilder dialog =
         new MaterialAlertDialogBuilder(context)
-            .setTitle(b.title)
-            .setMessage(message)
+            .setView(details)
             .setNegativeButton("Đóng", null);
     if (role == Role.READER)
       dialog.setPositiveButton(

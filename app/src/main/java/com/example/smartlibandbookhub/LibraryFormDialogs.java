@@ -67,6 +67,20 @@ final class LibraryFormDialogs {
                 existing == null ? "1" : String.valueOf(existing.copies),
                 true),
         description = field(form, "Mô tả", existing == null ? "" : existing.description, false);
+    if (existing == null) {
+      com.google.android.material.button.MaterialButton choose =
+          new com.google.android.material.button.MaterialButton(context, null,
+              com.google.android.material.R.attr.materialButtonTonalStyle);
+      choose.setText("Chọn sách từ danh mục mẫu");
+      choose.setOnClickListener(v -> BookPicker.show(context, BookPicker.demoSource(), book -> {
+        title.setText(book.title);
+        author.setText(book.author);
+        categoryInput.setText(book.category);
+        isbn.setText(book.isbn);
+        description.setText(book.description);
+      }));
+      form.addView(choose, 0, new LinearLayout.LayoutParams(-1, -2));
+    }
     androidx.appcompat.app.AlertDialog d =
         new MaterialAlertDialogBuilder(context)
             .setTitle(existing == null ? "Thêm đầu sách" : "Sửa đầu sách")

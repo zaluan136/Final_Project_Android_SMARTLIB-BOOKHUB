@@ -6,10 +6,17 @@
     android:orientation="vertical">
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
         android:paddingTop="6dp" android:paddingBottom="8dp" android:text="@string/loans"
-        android:textColor="@color/ink" android:textSize="26sp" android:textStyle="bold" />
+        android:textColor="?attr/colorOnSurface" android:textAppearance="?attr/textAppearanceHeadlineSmall" />
     <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
         android:paddingTop="6dp" android:paddingBottom="8dp" android:lineSpacingExtra="3dp"
         android:text="@string/loans_description" android:textColor="@color/muted" android:textSize="14sp" />
+    <TextView android:id="@+id/loans_overdue"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="12dp" android:padding="16dp"
+        android:background="?attr/colorErrorContainer"
+        android:textColor="?attr/colorOnErrorContainer"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:visibility="gone" />
     <LinearLayout android:id="@+id/loans_empty"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_marginTop="14dp" android:layout_marginBottom="4dp"

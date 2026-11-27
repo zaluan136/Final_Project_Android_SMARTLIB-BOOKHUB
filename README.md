@@ -19,12 +19,14 @@
 | Quét camera QR/barcode, RFID, push notifications | Chưa có | Chưa có |
 | Admin Web, quản lý tài khoản, báo cáo nâng cao | Chưa có | Chưa có |
 
-Giao diện tiếng Việt, chế độ sáng/tối theo thiết bị, màn hình rỗng, kiểm tra biểu mẫu và xác nhận thao tác. Bìa sách và vị trí thư viện là minh họa.
+Giao diện Java/XML dùng Material 3 Expressive, hỗ trợ sáng/tối theo thiết bị. Chi tiết sách hiển thị tình trạng, vị trí và quy định mượn; bìa sách và sơ đồ vị trí vẫn là minh họa. Màn hình phiếu hiển thị cảnh báo khi có sách quá hạn, chỉ khi mở ứng dụng; chưa có thông báo hệ thống chạy nền.
+
+Form thêm sách có thể chọn từ danh mục mẫu và chỉnh lại trước khi lưu. Đây là dữ liệu demo, chưa gọi Google Books hoặc API metadata nào.
 
 ## Mở bằng Android Studio
 
 1. Mở thư mục chứa `settings.gradle.kts`, không mở thư mục gitlink lồng bên trong.
-2. Dùng Android Studio hỗ trợ AGP **9.3.3**, Gradle **9.5.0**, Gradle JDK **25**, SDK **37.0**. `minSdk = 24`; Java source/target 11 theo project gốc.
+2. Dùng Android Studio hỗ trợ AGP **9.5.3**, Gradle **9.6.0**, Gradle JDK **25**, SDK **37.0**. `minSdk = 24`; Java source/target 11 theo project gốc.
 3. Sync Gradle rồi Run module `app`. Gradle dùng Kotlin DSL nhưng ứng dụng viết bằng Java + XML.
 4. `app/google-services.json` là file cấu hình Firebase cục bộ, được Git ignore. Nếu chưa có file, demo vẫn build/chạy; màn hình Firebase sẽ hướng dẫn cấu hình.
 5. Với Firebase, xem [hướng dẫn đầy đủ](docs/FIREBASE.md). Không đưa service-account key vào APK/repository.
@@ -35,7 +37,7 @@ Giao diện tiếng Việt, chế độ sáng/tối theo thiết bị, màn hìn
 - Chuyển vai trò demo **Thủ thư** → **Quản lý** → xác nhận bàn giao.
 - Chuyển **Độc giả** → gia hạn; đổi về **Thủ thư** để nhận trả.
 - **Quản trị** → **Thư viện** → điều chỉnh quy định.
-- Sửa/ẩn sách bằng cách mở chi tiết sách khi đang ở vai trò thủ thư/quản trị.
+- Sửa/ẩn sách bằng cách mở chi tiết sách khi đang ở vai trò thủ thư/quản trị. Tại **Quản lý → Thêm đầu sách**, có thể chọn dữ liệu mẫu rồi nhập vị trí và số bản.
 - **Thư viện → Kết nối thư viện Firebase** mở chế độ online độc lập. Không sao chép dữ liệu demo vào Firestore.
 
 Ngày demo dựa trên lịch thiết bị; ngày Firebase tính trên máy chủ theo `Asia/Ho_Chi_Minh` (UTC+7). Phiếu online hết hạn được xử lý theo lịch 30 phút, mỗi lượt tối đa 200 phiếu. Gia hạn online hiện chưa có kiểm tra hàng chờ vì tính năng hàng chờ online chưa triển khai.
@@ -60,6 +62,7 @@ Các test Java kiểm tra nghiệp vụ độc lập; test Android kiểm tra kh
 - `domain/Library.java`: quy tắc demo, không phụ thuộc Android.
 - `data/LibraryStore.java`: JSON có phiên bản, ghi nguyên tử bằng `AtomicFile`; lỗi đọc không tự xóa dữ liệu.
 - `MainActivity.java` + `res/layout/`: giao diện demo; I/O ở executor riêng.
+- `BookPicker.java`: tìm và chọn sách từ nguồn mẫu; chưa kết nối API metadata.
 - `FirebaseActivity.java`: đăng nhập và các thao tác trực tuyến; không có bộ chọn vai trò.
 - `firebase/functions/`: kiểm tra quyền, giao dịch nhiều tài liệu, khóa chống đặt trùng và receipt chống lặp yêu cầu.
 - `firebase/firestore.rules`: client chỉ đọc theo quyền, mọi ghi bị từ chối; Functions dùng Admin SDK.

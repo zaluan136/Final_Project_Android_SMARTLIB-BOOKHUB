@@ -33,7 +33,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textColor="?attr/colorOutline" />
+                android:textColor="?attr/colorOnSurfaceVariant" />
             <TextView android:id="@+id/loan_date"
                 style="?attr/textAppearanceBodyMedium"
                 android:layout_width="match_parent"

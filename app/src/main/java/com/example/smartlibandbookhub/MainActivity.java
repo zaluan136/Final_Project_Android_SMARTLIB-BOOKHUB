@@ -246,6 +246,9 @@ public final class MainActivity extends AppCompatActivity {
     // 1. Sort Chip
     sortChip = new Chip(this, null, com.google.android.material.R.attr.chipStyle);
     sortChip.setChipIconResource(R.drawable.ic_sort);
+    sortChip.setChipIconVisible(true);
+    sortChip.setCheckable(false);
+    sortChip.setEnsureMinTouchTargetSize(true);
     updateSortChipDisplay();
     sortChip.setOnClickListener(
         v -> {
@@ -291,6 +294,7 @@ public final class MainActivity extends AppCompatActivity {
       Chip c = new Chip(this, null, com.google.android.material.R.attr.chipStyle);
       c.setText(name);
       c.setCheckable(true);
+      c.setEnsureMinTouchTargetSize(true);
       c.setChecked(name.equals(category));
       c.setOnClickListener(
           v -> {
@@ -307,15 +311,8 @@ public final class MainActivity extends AppCompatActivity {
 
   private void updateSortChipDisplay() {
     if (sortChip == null) return;
-    if (sortBy == SortBy.DEFAULT) {
-      sortChip.setText(getString(R.string.sort));
-      sortChip.setCheckable(false);
-      sortChip.setChecked(false);
-    } else {
-      sortChip.setText(sortBy.label);
-      sortChip.setCheckable(true);
-      sortChip.setChecked(true);
-    }
+    sortChip.setText(sortBy == SortBy.DEFAULT ? getString(R.string.sort)
+        : getString(R.string.sort_selected, sortBy.label));
   }
 
   void editBook(Book book) {

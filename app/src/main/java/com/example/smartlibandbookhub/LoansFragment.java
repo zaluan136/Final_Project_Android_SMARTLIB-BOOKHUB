@@ -53,6 +53,14 @@ public final class LoansFragment extends Fragment {
         Library.Loan loan = state.library.loans.get(i);
         if (loan.readerId.equals(Library.READER_ID)) entries.add(loan);
       }
+      int overdue = 0;
+      long today = LibraryFormat.today();
+      for (Library.Loan loan : entries) {
+        if (loan.status == Library.Status.BORROWED && loan.dueDay < today) overdue++;
+      }
+      android.widget.TextView reminder = header.findViewById(R.id.loans_overdue);
+      reminder.setVisibility(overdue > 0 ? View.VISIBLE : View.GONE);
+      reminder.setText(getString(R.string.overdue_reminder, overdue));
       header.findViewById(R.id.loans_empty).setVisibility(entries.isEmpty() ? View.VISIBLE : View.GONE);
       LoanRowBinder binder = new LoanRowBinder(state.library, state.role, viewModel, activity::confirm);
       LibraryListAdapter adapter = new LibraryListAdapter(requireContext(), header, state.library,
